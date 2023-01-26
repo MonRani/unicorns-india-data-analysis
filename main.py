@@ -1,54 +1,48 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# read in dataset
+# read the dataset into a pandas dataframe
 df = pd.read_csv("dataset.csv")
 
-# rename columns
-df.columns = ["No", "Company", "Sector", "Publicly_Listed", "Entry_Valuation_B", "Valuation_B", "Entry", "Former_Unicorn", "Location", "Select_Investors"]
+# clean the data (if necessary)
+df.dropna(inplace=True)
 
-# convert entry and valuation columns to numeric
-df["Entry_Valuation_B"] = pd.to_numeric(df["Entry_Valuation_B"])
-df["Valuation_B"] = pd.to_numeric(df["Valuation_B"])
+# 1) top 10 Sectors which have the most number of companies
+top_sectors = df['Sector'].value_counts().nlargest(10)
+print(top_sectors)
 
-# calculate growth as valuation - entry valuation
-df["Growth"] = df["Valuation_B"] - df["Entry_Valuation_B"]
-
-# 1) Company Sector popularity in each location
-location_sector_counts = df.groupby(["Location", "Sector"]).size().reset_index(name="Counts")
-print(location_sector_counts)
-
-# 2) how likely the Select Investors are to invest in each Company Sector
-sector_investor_counts = df.groupby(["Sector", "Select_Investors"]).size().reset_index(name="Counts")
-print(sector_investor_counts)
+# 2) Comparison of Entry Valuation and Valuation of top ten companies with highest valuation
+top_valuations = df.nlargest(10, 'Valuation ($B)')
+comparison = top_valuations[['Company', 'Entry Valuation($B)', 'Valuation ($B)']]
+print(comparison)
 
 # 3) Top 20 Companies with High Growth defined as Valuation ($B) - Entry Valuation($B)
-top_20_growth = df.sort_values(by="Growth", ascending=False).head(20)
-print(top_20_growth[["Company", "Growth"]])
+df['Growth'] = df['Valuation ($B)'] - df['Entry Valuation($B)']
+top_growth = df.nlargest(20, 'Growth')
+top_growth = top_growth[['Company', 'Growth']]
+print(top_growth)
 
-# 1) Company Sector popularity in each location
-location_sector_counts = df.groupby(["Location", "Sector"]).size().reset_index(name="Counts")
-location_sector_counts.pivot(index='Location', columns='Sector', values='Counts').plot(kind='bar', stacked=True)
-plt.xlabel("Location")
-plt.ylabel("Counts")
-plt.title("Company Sector Popularity in Each Location")
-plt.savefig("location_sector_counts.png")
+# 1) top 10 Sectors which have the most number of companies
+top_sectors.plot(kind='bar')
+plt.xlabel('Sector')
+plt.ylabel('Number of Companies')
+plt.title('Top 10 Sectors with the Most Number of Companies')
+plt.savefig('top_sectors.png')
 plt.show()
 
-# 2) how likely the Select Investors are to invest in each Company Sector
-sector_investor_counts = df.groupby(["Sector", "Select_Investors"]).size().reset_index(name="Counts")
-sector_investor_counts.pivot(index='Sector', columns='Select_Investors', values='Counts').plot(kind='bar', stacked=True)
-plt.xlabel("Sector")
-plt.ylabel("Counts")
-plt.title("Select Investors' Investment in Each Company Sector")
-plt.savefig("sector_investor_counts.png")
+# 2) Comparison of Entry Valuation and Valuation of top ten companies with highest valuation
+comparison.plot(x='Company', y=['Entry Valuation($B)', 'Valuation ($B)'], kind='bar')
+plt.xlabel('Company')
+plt.ylabel('Valuation ($B)')
+plt.title('Comparison of Entry Valuation and Valuation of Top Ten Companies with Highest Valuation')
+plt.legend(['Entry Valuation', 'Valuation'])
+plt.savefig('valuation_comparison.png')
 plt.show()
 
 # 3) Top 20 Companies with High Growth defined as Valuation ($B) - Entry Valuation($B)
-top_20_growth = df.sort_values(by="Growth", ascending=False).head(20)
-top_20_growth.plot(x="Company", y="Growth", kind="bar")
-plt.xlabel("Company")
-plt.ylabel("Growth (Valuation - Entry Valuation in $B)")
-plt.title("Top 20 Companies with High Growth")
-plt.savefig("top_20_growth.png")
+top_growth.plot(x='Company', y='Growth', kind='bar')
+plt.xlabel('Company')
+plt.ylabel('Growth (Valuation ($B) - Entry Valuation($B))')
+plt.title('Top 20 Companies with High Growth')
+plt.savefig('top_growth.png')
 plt.show()
